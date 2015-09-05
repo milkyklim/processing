@@ -155,9 +155,8 @@ void mousePressed() {
   /* increase/decrease radius of the main circle*/
   if (mouseButton == LEFT)
     nn += (nn + 1 > cMAX) ? 0 : 1;
-  if (mouseButton == RIGHT){
+  if (mouseButton == RIGHT)
     nn -= (nn - 1 < cMIN) ? 0 : 1;
-  }
 }
 
 void mouseMoved(){
