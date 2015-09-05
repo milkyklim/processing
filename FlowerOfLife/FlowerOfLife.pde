@@ -63,7 +63,6 @@ void draw() {
   minMaxDist(distColorCirc, posX, posY, maxDist, minDist);
   /* draw inner circles */
   if (NN > 3) /* to prevent ugly overlapping */
-    // for (int i = 0; i < posX.length; ++i){
     for (int i =  posX.length - 1; i >= 0; --i){    
       stroke(map(dist(posX[i], posY[i], mouseX - width/2, mouseY - height/2), maxDist/40*NN, minDist/40*NN, fading, 255));     
       ellipse(posX[i], posY[i], 2*r, 2*r);  
