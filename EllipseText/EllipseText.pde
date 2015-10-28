@@ -62,7 +62,7 @@ void drawText() {
   for (int i = 0; i < black.width; ++i) {
     for (int j = 0; j < black.height; ++j) {     
       if (alpha(black.pixels[i + black.width*j]) != 0) { /* work only with letters */
-        if (isInside(i, j)) { /* inside circle */
+        if (isInside(i + xOffset, j + yOffset)) { /* inside circle */
             /* do nothing */
         } else {
             /* invert color */
@@ -80,7 +80,7 @@ void drawText() {
 
 boolean isInside(int i, int j) {
   boolean res = true;
-  if ((dist(xEllipse, yEllipse, i + xOffset, j + yOffset) - r) > EPS) {
+  if ((dist(xEllipse, yEllipse, i, j) - r) > EPS) {
     res = false;
   }
   return res;
