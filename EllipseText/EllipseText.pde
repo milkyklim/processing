@@ -1,3 +1,9 @@
+/* 
+  change color of the text in/out ellipse
+*/
+
+final float EPS = 0.0001;
+final int TEXTSIZE = 32;
 int step = 1;
 
 float r, xEllipse = 50, yEllipse = 50;
@@ -7,9 +13,6 @@ String msg = "milkyklim\nread it backwards";
    and drop transparent pixels */
 int xOffset = 100;
 int yOffset = 100;
-
-float EPS = 0.0001;
-int TEXTSIZE = 32;
 boolean switchColor = true;
 
 void setup() {
@@ -43,6 +46,7 @@ void drawText() {
   /* create Text */
   white.beginDraw();
   white.noStroke();
+  white.background(0, 0);
   white.fill(switchColor ? 255 : 0);
   white.textAlign(CENTER, CENTER);
   white.textSize(TEXTSIZE);
@@ -51,6 +55,7 @@ void drawText() {
 
   black.beginDraw();
   black.noStroke();
+  black.background(0, 0);
   black.fill(switchColor ? 0 : 255);
   black.textAlign(CENTER, CENTER);
   black.textSize(TEXTSIZE);
