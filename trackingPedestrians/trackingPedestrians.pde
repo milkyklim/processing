@@ -16,6 +16,8 @@ int[] mR;
 int[] mB;
 int[] mG;
 
+int[] mGRAY;
+
 int[] binaryImage;
 boolean [] binaryVisited;
 
@@ -33,7 +35,7 @@ final int EPS = 50;
 int backgroundIdx = 0;  /* index to count the frames for background */
 int backgroundN = 45; /* number of frames to get the background */
 
-ArrayList<Pedestrian> pedestrians = new ArrayList<Pedestrian>();
+// ArrayList<Pedestrian> pedestrians = new ArrayList<Pedestrian>();
 
 void setup(){
   size(640, 480);
@@ -50,9 +52,10 @@ void setup(){
   mR = new int [video.width*video.height];
   mG = new int [video.width*video.height];
   mB = new int [video.width*video.height];
+  mGRAY = new int [video.width*video.height];
   
   binaryImage = new int [video.width*video.height];
-  binaryVisited =new boolean [video.width*video.height]; 
+  binaryVisited = new boolean [video.width*video.height]; 
 
   initialize();
 
@@ -64,14 +67,15 @@ void draw(){
     video.read();
     /* set current frame */
     cFrame.copy(inFrame, 0, 0, width, height, 0, 0, width, height);
-    // cFrame.filter(GRAY);
-        /* dummy */
-    rectangles.beginDraw();
-    rectangles.endDraw();
+    cFrame.filter(GRAY);
     
     if (frameCount < backgroundN){ /* wait seconds for camera to start */
+      /* dummy to prevent errors */
+      rectangles.beginDraw();
+      rectangles.endDraw();
       /* accumulate background colors */
-      accColors(cFrame);
+      //accColors(cFrame);
+      accColorsGray(cFrame);
       ++backgroundIdx;
       // outFrame.loadPixels();
       // outFrame.copy(cFrame, 0, 0, video.width, video.height, 0, 0, video.width, video.height); 
@@ -81,12 +85,15 @@ void draw(){
     }
     else{
       if (flagAverage) {
-        avgColors(cFrame, backgroundIdx);
-        flagAverage = !flagAverage;
-        
+        //avgColors(cFrame, backgroundIdx);
+        avgColorsGray(cFrame, backgroundIdx);
+        flagAverage = !flagAverage;  
       }
+      //resetBinaryImage(); /* ?redundant? check the way the function below is written */
+      //subtractFrames(cFrame);
+      //resetBinaryVisited();
       resetBinaryImage(); /* ?redundant? check the way the function below is written */
-      subtractFrames(cFrame);
+      subtractFramesGray(cFrame);
       resetBinaryVisited();
       // findClusters();
       findInitialObjects();
@@ -100,7 +107,8 @@ void draw(){
           for (int j = 0; j < width; ++j)
             bFrame.pixels[i*width + j] = binaryImage[i*width + j] == 1 ? 0xffffff : 0x000000;
         bFrame.updatePixels(); 
-        bFrame.save("out.jpg");
+        bFrame.save("data/out.jpg");
+        saveFrame("data/output-######.png");
       }
       /*-------*/
       
@@ -135,6 +143,18 @@ void subtractFrames(PImage inImage){
       if (abs((inImage.pixels[i*inImage.width + j] >> 16 & 0xff)  - mR[i*inImage.width + j]) > threshold |
           abs((inImage.pixels[i*inImage.width + j] >>  8 & 0xff)  - mG[i*inImage.width + j]) > threshold |
           abs((inImage.pixels[i*inImage.width + j]       & 0xff)  - mB[i*inImage.width + j]) > threshold)
+        binaryImage[i*inImage.width + j] = 1;
+      else 
+        binaryImage[i*inImage.width + j] = 0;
+    }
+  }
+}
+
+void subtractFramesGray(PImage inImage){
+  inImage.loadPixels();
+  for (int i =0; i < inImage.height; ++i){
+    for (int j =0; j < inImage.width; ++j){
+      if (abs((inImage.pixels[i*inImage.width + j] & 0xff)  - mGRAY[i*inImage.width + j]) > threshold)
         binaryImage[i*inImage.width + j] = 1;
       else 
         binaryImage[i*inImage.width + j] = 0;
@@ -201,7 +221,7 @@ void findInitialObjects(){
           bfs(i, j, params);
           ++objNum;
           
-          //rectMode(CORNERS);
+          rectMode(CORNERS);
           /*Skip small objects */
          
           if ((params[2] - params[0])*(params[3] - params[1]) > thresholdObj){
@@ -315,7 +335,8 @@ void initialize(){
   for (int i =0; i < bFrame.height*bFrame.width; ++i){
     mR[i] = 0;
     mG[i] = 0;
-    mB[i] = 0;  
+    mB[i] = 0; 
+    mGRAY[i] = 0; /* WATCH OUT!*/
   }
 }
 
@@ -331,12 +352,29 @@ void accColors(PImage img){
     }
 }
 
+void accColorsGray(PImage img){
+  img.loadPixels();
+  for (int i =0; i < img.height; ++i){
+      for (int j =0; j < img.width; ++j){
+        mGRAY[i*img.width + j] += img.pixels[i*img.width + j] & 0xff; /* >> 16 and >> 8 are also fine*/
+      }
+    }
+}
+
 void avgColors(PImage img, int num){
   for (int i =0; i < img.height; ++i){
     for (int j =0; j < img.width; ++j){
       mR[i*img.width + j] /= num;
       mG[i*img.width + j] /= num;
       mB[i*img.width + j] /= num;
+    }
+   } 
+}
+
+void avgColorsGray(PImage img, int num){
+  for (int i =0; i < img.height; ++i){
+    for (int j =0; j < img.width; ++j){
+      mGRAY[i*img.width + j] /= num;
     }
    } 
 }
@@ -377,91 +415,6 @@ boolean isSame(int i, int j){
   //return dist(c >> 16 & 0xff, p >> 16 & 0xff, c >> 8 & 0xff, p >> 8 & 0xff, c & 0xff, p & 0xff) < EPS; 
 }
 
-/*-------TURNS OUT TO BE TOO EXPENSIVE ------------------------------------------*/
-void findClusters(/*int iC, int jC, int[] params*/){
-  for (int i = 1; i < cFrame.height - 1; ++i){ /* skip edges */
-    for (int j = 1; j < cFrame.width - 1; ++j){ /* skip edges */
-      if (!binaryVisited[i*cFrame.width + j]){
-        binaryVisited[i*cFrame.width + j] = true; /* set every occuring pixel as visited*/ /* redundant */
-        if (binaryImage[i*cFrame.width + j] == 1){
-          enterBinaryVisited(i, j);
-        }
-      }
-    }
-  }
-}
-
-/* params: xMin; xMax; yMin; yMax; */
-/* TODO: Remove redundant if's */
-void enterBinaryVisited(int i, int j/*, int[] params*/){
-  binaryVisited[i*cFrame.width + j] = true; /* set current pixel as visited*/ /* redundant */
-  if (i + 1 < cFrame.height && j + 1 < cFrame.width && i - 1 >= 0 && j - 1 >= 0){ /* valid rectangle */
-    /* check top/bottom/left/right pixels*/
-    if (i + 1 < cFrame.height)
-      if (binaryImage[(i + 1)*cFrame.width + j] == 1)
-        if (!binaryVisited[(i + 1)*cFrame.width + j] ){
-          binaryVisited[(i + 1)*cFrame.width + j] = true;
-          enterBinaryVisited(i + 1, j);
-        }
-    if (j + 1 < cFrame.width)
-      if (binaryImage[i*cFrame.width + (j + 1)] == 1)
-        if (!binaryVisited[i*cFrame.width + (j + 1)]){
-          binaryVisited[i*cFrame.width + (j + 1)] = true;
-          enterBinaryVisited(i, j);
-        }
-    if(i - 1 >= 0)
-      if (binaryImage[(i - 1)*cFrame.width + j] == 1)
-        if (!binaryVisited[(i - 1)*cFrame.width + j]){
-          binaryVisited[(i - 1)*cFrame.width + j] = true;
-          enterBinaryVisited(i - 1, j);
-        }
-    if (j - 1 >= 0)
-      if (binaryImage[i*cFrame.width + (j - 1)] == 1)
-        if (!binaryVisited[i*cFrame.width + (j - 1)]){
-          binaryVisited[i*cFrame.width + (j - 1)] = true;
-          enterBinaryVisited(i, j - 1); 
-        }
-  }
-}
-
-
-void dfs(int i, int j, int[] params){
-  binaryVisited[i*cFrame.width + j] = true; /* visited current node */
-  if (j - 1 > 0)
-    if (!binaryVisited[i*cFrame.width + (j - 1)]){
-      if (binaryImage[i*cFrame.width + (j - 1)] != 0){ /* TODO: this one should be better checked */
-        if (params[0] > j - 1)
-          params[0] = j - 1;
-        dfs(i, j - 1, params);
-      }
-    }
-  if(i - 1 > 0)  
-    if (!binaryVisited[(i - 1)*cFrame.width + j]){
-      if (binaryImage[(i - 1)*cFrame.width + j] != 0) { /* TODO: this one should be better checked */
-        if (params[1] > i - 1)
-          params[1] = i - 1;
-        dfs(i - 1, j, params);
-      } 
-    }
-  if (j + 1 < cFrame.width)
-    if (!binaryVisited[i*cFrame.width + (j + 1)]){
-      if (binaryImage[i*cFrame.width + (j + 1)] != 0){ /* TODO: this one should be better checked */
-        if (params[2] < j + 1)
-          params[2] = j + 1;
-        dfs(i, j + 1, params);
-      }
-    }
-  if(i + 1 < cFrame.height)  
-    if (!binaryVisited[(i + 1)*cFrame.width + j]){
-      if (binaryImage[(i + 1)*cFrame.width + j] != 0) { /* TODO: this one should be better checked */
-        if (params[3] < i + 1)
-          params[3] = i + 1;
-        dfs(i + 1, j, params);
-      } 
-    }
-}
-/*--------------------------------------------------------------------------------*/
-
 void mouseClicked(){
   save("data/output-#####.png");
   rectangles.clear();
@@ -469,5 +422,5 @@ void mouseClicked(){
 
 void keyPressed(){
   if (keyCode == 's' || keyCode == 'S')
-    save("data/output-######.png");
+    saveFrame("data/output-######.png");
 }
