@@ -1,3 +1,6 @@
+final int BINSIZE = 16;
+final int EPS = 50; 
+
 class Pedestrian{
   /* characteristics important for tracking */
   private int id;

@@ -1,7 +1,7 @@
-/*color histograms or bins 16×16×16 */
 import processing.video.*; 
 import java.util.*;
-//import java.util.LinkedList.*;
+/* maximum number of rectangles */
+int MAXSIZE = 1000;
 Capture video;
 
 PImage pFrame, /* video previous frame */ 
@@ -11,31 +11,26 @@ PImage pFrame, /* video previous frame */
 PGraphics outFrame; /* the out frame with tracked pedestrians on it */
 PGraphics rectangles;
 
-/* reason to make it float -- see below  */
+/* store the colors for background */
 int[] mR;
 int[] mB;
 int[] mG;
-
+/* store the grayscale background */
 int[] mGRAY;
 
 int[] binaryImage;
 boolean [] binaryVisited;
 
-/* several threshold valuescan be used for different colors */
-int threshold = 50; /* this one should be adjust put it as an input parameter somehow */
+/* several threshold values can be used for different colors */
+int threshold = 50; /* this one should be adjusted */
 
-/* objects greater than 6*6 will be considered as moving objects */
+/* objects greater than 6px*6px will be considered as moving objects */
 int thresholdObj = 6*6; 
-
+/* switch for tracking mode */
 boolean flagAverage = true;
-
-final int BINSIZE = 16;
-final int EPS = 50; 
 
 int backgroundIdx = 0;  /* index to count the frames for background */
 int backgroundN = 45; /* number of frames to get the background */
-
-// ArrayList<Pedestrian> pedestrians = new ArrayList<Pedestrian>();
 
 void setup(){
   size(640, 480);
@@ -58,7 +53,7 @@ void setup(){
   binaryVisited = new boolean [video.width*video.height]; 
 
   initialize();
-
+  initializeGray();
 }
 
 void draw(){
@@ -68,11 +63,12 @@ void draw(){
     /* set current frame */
     cFrame.copy(inFrame, 0, 0, width, height, 0, 0, width, height);
     cFrame.filter(GRAY);
+    /* dummy to prevent errors */
+    rectangles.beginDraw();
+    rectangles.endDraw();
     
     if (frameCount < backgroundN){ /* wait seconds for camera to start */
-      /* dummy to prevent errors */
-      rectangles.beginDraw();
-      rectangles.endDraw();
+
       /* accumulate background colors */
       //accColors(cFrame);
       accColorsGray(cFrame);
@@ -163,25 +159,25 @@ void subtractFramesGray(PImage inImage){
 }
 
 /* this function takes into account the light update*/
-void subtractFrames2(PImage inImage){
-  float beta = 0.1;
-  inImage.loadPixels();
-  for (int i =0; i < inImage.height; ++i){
-    for (int j =0; j < inImage.width; ++j){
-      /*Extra step -- light update */
-      mR[i*inImage.width + j] = int( beta*(inImage.pixels[i*inImage.width + j] >> 16 & 0xff)  + (1 - beta)*mR[i*inImage.width + j]);
-      mG[i*inImage.width + j] = int( beta*(inImage.pixels[i*inImage.width + j] >>  8 & 0xff)  + (1 - beta)*mG[i*inImage.width + j]);
-      mB[i*inImage.width + j] = int( beta*(inImage.pixels[i*inImage.width + j]       & 0xff)  + (1 - beta)*mB[i*inImage.width + j]);
+//void subtractFrames2(PImage inImage){
+//  float beta = 0.1;
+//  inImage.loadPixels();
+//  for (int i =0; i < inImage.height; ++i){
+//    for (int j =0; j < inImage.width; ++j){
+//      /*Extra step -- light update */
+//      mR[i*inImage.width + j] = int( beta*(inImage.pixels[i*inImage.width + j] >> 16 & 0xff)  + (1 - beta)*mR[i*inImage.width + j]);
+//      mG[i*inImage.width + j] = int( beta*(inImage.pixels[i*inImage.width + j] >>  8 & 0xff)  + (1 - beta)*mG[i*inImage.width + j]);
+//      mB[i*inImage.width + j] = int( beta*(inImage.pixels[i*inImage.width + j]       & 0xff)  + (1 - beta)*mB[i*inImage.width + j]);
         
-      if (abs((inImage.pixels[i*inImage.width + j] >> 16 & 0xff)  - mR[i*inImage.width + j]) > threshold |
-          abs((inImage.pixels[i*inImage.width + j] >>  8 & 0xff)  - mG[i*inImage.width + j]) > threshold |
-          abs((inImage.pixels[i*inImage.width + j]       & 0xff)  - mB[i*inImage.width + j]) > threshold)
-        binaryImage[i*inImage.width + j] = 1;
-      else 
-        binaryImage[i*inImage.width + j] = 0;
-    }
-  }
-}
+//      if (abs((inImage.pixels[i*inImage.width + j] >> 16 & 0xff)  - mR[i*inImage.width + j]) > threshold |
+//          abs((inImage.pixels[i*inImage.width + j] >>  8 & 0xff)  - mG[i*inImage.width + j]) > threshold |
+//          abs((inImage.pixels[i*inImage.width + j]       & 0xff)  - mB[i*inImage.width + j]) > threshold)
+//        binaryImage[i*inImage.width + j] = 1;
+//      else 
+//        binaryImage[i*inImage.width + j] = 0;
+//    }
+//  }
+//}
 
 void resetBinaryImage(){
   for (int i = 0; i < binaryImage.length; ++i)
@@ -193,7 +189,14 @@ void resetBinaryVisited(){
     binaryVisited[i] = false;
 } 
 
-void findInitialObjects(){
+void findInitialObjects(){  
+  int idxCur = 0;
+
+  int[] qXmin = new int [MAXSIZE];
+  int[] qXmax = new int [MAXSIZE];
+  int[] qYmin = new int [MAXSIZE];
+  int[] qYmax = new int [MAXSIZE];  
+  
   int objNum = 0;
   int[] params = new int[4];
   /*[0] - xMin 
@@ -201,10 +204,10 @@ void findInitialObjects(){
     [2] - xMax
     [3] - yMax
     []*/
-  rectangles.beginDraw();
-  rectangles.rectMode(CORNERS); /* put in setup */
-  rectangles.stroke(255, 0, 0);
-  rectangles.noFill();
+  // rectangles.beginDraw();
+  // rectangles.rectMode(CORNERS); /* put in setup */
+  // rectangles.stroke(255, 0, 0);
+  // rectangles.noFill();
   for(int i = 0; i < cFrame.height; ++i){
     for (int j = 0; j < cFrame.width; ++j){
       if (!binaryVisited[i*cFrame.width + j]){ /* wasn't visited */
@@ -221,19 +224,64 @@ void findInitialObjects(){
           bfs(i, j, params);
           ++objNum;
           
-          rectMode(CORNERS);
+          if (idxCur == 0){
+            qXmin[0] = params[0];
+            qXmax[0] = params[2];
+            qYmin[0] = params[1];
+            qYmax[0] = params[3];
+            idxCur++;
+          }
+          else{
+            for(int ii = 0; ii < idxCur && ii < MAXSIZE; ++ii){                
+              /*is there an intersection ? */
+              if (qXmin[ii] < params[2] && qXmax[ii] > params[0] &&
+                  qYmin[ii] < params[3] && qYmax[ii] > params[1]){ /* no! */
+                  idxCur = min(MAXSIZE - 1, idxCur + 1);
+                qXmin[idxCur] = params[0];
+                qXmax[idxCur] = params[2];
+                qYmin[idxCur] = params[1];
+                qYmax[idxCur] = params[3];
+              }
+              else{
+              /*merge the rectangles */
+                qXmin[ii] = min(qXmin[ii], params[0]);
+                qXmax[ii] = max(qXmax[ii], params[2]);
+                qYmin[ii] = min(qYmin[ii], params[1]);
+                qYmax[ii] = max(qYmax[ii], params[3]);
+              }
+            }
+          }
+          
+          
+          // rectMode(CORNERS);
           /*Skip small objects */
-         
+           
           if ((params[2] - params[0])*(params[3] - params[1]) > thresholdObj){
             // println((params[2] - params[0])*(params[3] - params[1]));
-            rectangles.rect(params[0], params[1], params[2], params[3]);
+            // rectangles.rect(params[0], params[1], params[2], params[3]);
           }
           // println(params[0], params[1], params[2], params[3]);
         }
       }
     }
   }
+  
+  /* draw oblects */
+  rectangles.beginDraw();
+  rectangles.rectMode(CORNERS); /* put in setup */
+  rectangles.stroke(255, 0, 0);
+  rectangles.noFill();  
+  for (int ii = 0; ii < idxCur; ++ii){
+    rectangles.rect(qXmin[ii], qYmin[ii], qXmax[ii], qYmax[ii]);  
+    //println(qXmin[ii] + " " + qYmin[ii] + " " + qXmax[ii] + " " + qYmax[ii]);
+  }
   rectangles.endDraw();
+  //qXmin.clear();
+  //qXmax.clear();
+  //qYmin.clear();
+  //qYmax.clear();  
+  
+  // rectangles.endDraw();
   //println(objNum);
 }
 
@@ -301,42 +349,38 @@ void getInititalObjects(){
 
 
 
-void track2(){
-  pFrame.loadPixels();
-  cFrame.loadPixels();
-  outFrame.loadPixels();
-  // outFrame.beginDraw();
-  // outFrame.noStroke();
-  for (int i = 0; i < height; ++i)
-    for (int j = 0; j < width; ++j){
-      //println(hex(outFrame.pixels[i*width + j]), hex(pFrame.pixels[i*width + j]));
-      // if (abs(cFrame.pixels[i*width + j] - pFrame.pixels[i*width + j]) < 10)
-      if (isSameG(i, j))
-        outFrame.pixels[i*width + j] = cFrame.pixels[i*width + j];
-      else 
-        outFrame.pixels[i*width + j] = color(255, 0, 0);
-  }
-  // outFrame.endDraw();
-  outFrame.updatePixels();
-}
+//void track2(){
+//  pFrame.loadPixels();
+//  cFrame.loadPixels();
+//  outFrame.loadPixels();
+//  // outFrame.beginDraw();
+//  // outFrame.noStroke();
+//  for (int i = 0; i < height; ++i)
+//    for (int j = 0; j < width; ++j){
+//      //println(hex(outFrame.pixels[i*width + j]), hex(pFrame.pixels[i*width + j]));
+//      // if (abs(cFrame.pixels[i*width + j] - pFrame.pixels[i*width + j]) < 10)
+//      if (isSameG(i, j))
+//        outFrame.pixels[i*width + j] = cFrame.pixels[i*width + j];
+//      else 
+//        outFrame.pixels[i*width + j] = color(255, 0, 0);
+//  }
+//  // outFrame.endDraw();
+//  outFrame.updatePixels();
+//}
 
-
-/* returns red matrix */
-void getMR(){
-  for (int i =0; i < bFrame.height; ++i){
-    for (int j =0; j < bFrame.width; ++j){
-      mR[i*bFrame.width + j] = (bFrame.pixels[i*bFrame.width + j] >> 16) & 0xff;
-    }
-  }
-}
-
-
+/* initialize RGB pixels */
 void initialize(){
   for (int i =0; i < bFrame.height*bFrame.width; ++i){
     mR[i] = 0;
     mG[i] = 0;
     mB[i] = 0; 
-    mGRAY[i] = 0; /* WATCH OUT!*/
+  }
+}
+
+/* initialize gray pixels */
+void initializeGray(){
+  for (int i =0; i < bFrame.height*bFrame.width; ++i){
+    mGRAY[i] = 0;
   }
 }
 
@@ -379,41 +423,51 @@ void avgColorsGray(PImage img, int num){
    } 
 }
 
+
+/* returns red matrix */
+//void getMR(){
+//  for (int i =0; i < bFrame.height; ++i){
+//    for (int j =0; j < bFrame.width; ++j){
+//      mR[i*bFrame.width + j] = (bFrame.pixels[i*bFrame.width + j] >> 16) & 0xff;
+//    }
+//  }
+//}
+
 /* returns green matrix */
-void getMG(){
-  for (int i =0; i < bFrame.height; ++i){
-    for (int j =0; j < bFrame.width; ++j){
-      mG[i*bFrame.width + j] = bFrame.pixels[i*bFrame.width + j] >> 8 & 0xff;
-    }
-  }
-}
+//void getMG(){
+//  for (int i =0; i < bFrame.height; ++i){
+//    for (int j =0; j < bFrame.width; ++j){
+//      mG[i*bFrame.width + j] = bFrame.pixels[i*bFrame.width + j] >> 8 & 0xff;
+//    }
+//  }
+//}
 
 /* returns blue matrix */
-void getMB(){
-  for (int i =0; i < bFrame.height; ++i){
-    for (int j =0; j < bFrame.width; ++j){
-      mB[i*bFrame.width + j] = bFrame.pixels[i*bFrame.width + j]  & 0xff;
-    }
-  }
-}
+//void getMB(){
+//  for (int i =0; i < bFrame.height; ++i){
+//    for (int j =0; j < bFrame.width; ++j){
+//      mB[i*bFrame.width + j] = bFrame.pixels[i*bFrame.width + j]  & 0xff;
+//    }
+//  }
+//}
 
-boolean isSameG(int i, int j){
-  int c = cFrame.pixels[i*width + j];
-  int p = pFrame.pixels[i*width + j];
-  return abs(c & 0xff - p & 0xff) < EPS;
-}
+//boolean isSameG(int i, int j){
+//  int c = cFrame.pixels[i*width + j];
+//  int p = pFrame.pixels[i*width + j];
+//  return abs(c & 0xff - p & 0xff) < EPS;
+//}
 
-boolean isSame(int i, int j){
-  int c = cFrame.pixels[i*width + j];
-  int p = pFrame.pixels[i*width + j];
-  /* maybe it is more useful to check each color separetly ?*/
-  return (abs(c >> 16 & 0xff - p >> 16 & 0xff) < EPS &&
-          abs(c >> 8 & 0xff - p >> 8 & 0xff) < EPS && 
-          abs(c & 0xff - p & 0xff) < EPS);
+//boolean isSame(int i, int j){
+//  int c = cFrame.pixels[i*width + j];
+//  int p = pFrame.pixels[i*width + j];
+//  /* maybe it is more useful to check each color separetly ?*/
+//  return (abs(c >> 16 & 0xff - p >> 16 & 0xff) < EPS &&
+//          abs(c >> 8 & 0xff - p >> 8 & 0xff) < EPS && 
+//          abs(c & 0xff - p & 0xff) < EPS);
   
-  /* check if colors are close to each other */
-  //return dist(c >> 16 & 0xff, p >> 16 & 0xff, c >> 8 & 0xff, p >> 8 & 0xff, c & 0xff, p & 0xff) < EPS; 
-}
+//  /* check if colors are close to each other */
+//  //return dist(c >> 16 & 0xff, p >> 16 & 0xff, c >> 8 & 0xff, p >> 8 & 0xff, c & 0xff, p & 0xff) < EPS; 
+//}
 
 void mouseClicked(){
   save("data/output-#####.png");
