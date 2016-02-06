@@ -2,7 +2,7 @@
   Creates Koch's snowflake 
 */
 
-ArrayList<KochLine> line1, line2, line3;
+ArrayList<KochLine> lines;
 
 int steps = 0;
 
@@ -31,15 +31,13 @@ void setup() {
   two = new PVector(x[1], y[1]);
   three = new PVector(x[2], y[2]);
 
-  // define edges
-  line1 = new ArrayList<KochLine>();
-  line2 = new ArrayList<KochLine>();
-  line3 = new ArrayList<KochLine>();
+  // define edges 
+  lines = new ArrayList<KochLine>();
 
   // define Koch's curve
-  line1.add(new KochLine(one, two));
-  line2.add(new KochLine(two, three));
-  line3.add(new KochLine(three, one));
+  lines.add(new KochLine(one, two));
+  lines.add(new KochLine(two, three));
+  lines.add(new KochLine(three, one));
 
 
 }
@@ -47,16 +45,10 @@ void setup() {
 void draw() {
   background(255);
 
-  for (KochLine l : line1)
-    l.display();
-  for (KochLine l : line2)
-    l.display();
-  for (KochLine l : line3)
-    l.display();
-
-  line1 = generate(line1);
-  line2 = generate(line2);
-  line3 = generate(line3);
+  for (KochLine l : lines)
+   l.display();
+   
+  lines = generate(lines);
 
   // save each step
   save("data/snow" + steps + ".png");
@@ -133,3 +125,4 @@ class KochLine {
     line(start.x, start.y, end.x, end.y);
   }
 }
+
