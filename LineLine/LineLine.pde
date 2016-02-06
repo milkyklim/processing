@@ -21,7 +21,7 @@ void setup() {
   drawText();
 //  gifExport = new GifMaker(this, "LineLine.gif");
 //  gifExport.setRepeat(0); // make an "endless" animation
-  save("init.png");
+//  save("init.png");
 }
 
 int idx = 0;
