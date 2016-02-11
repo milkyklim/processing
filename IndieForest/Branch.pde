@@ -61,11 +61,19 @@ class Branch {
   }
   
   // displays the fractal
-  void display() {
-    strokeWeight(steps - generation + 1);
-    stroke(FILL);
-    fill(FILL);
-    line(start.x, start.y, end.x, end.y);
+  PGraphics display(PGraphics inPg) {
+    // PGraphics pg = createGraghics(inPg.width, inPg.height);
+    
+    inPg.beginDraw();
+    inPg.translate(width/2, height);
+    inPg.strokeWeight(steps - generation + 1);
+//    inPg.stroke(BACKGROUND); // error!!!
+//    inPg.fill(FILL);
+    inPg.line(start.x, start.y, end.x, end.y);
+    inPg.endDraw();
+    
+    return inPg;
+    
   }
 }
 
