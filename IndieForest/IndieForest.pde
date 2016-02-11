@@ -1,7 +1,5 @@
-/* //<>// //<>//
+/* //<>//
   creates Tree Fractal
- 
- should produce Forest now 
  */
 
 ArrayList<Branch> branches;
@@ -18,10 +16,17 @@ PVector outS;
 color BACKGROUND; 
 color FILL;
 
+
+/*
+    add variables to control the work flow
+ 0: general fractal structure
+ 1: random angle
+ 2: random angle + random number of branches
+ */
 int control = 1;
 
 void setup() {
-  size(800, 300);
+  size(300, 300);
   background(BACKGROUND);
   angle = PI/2; 
   idx = 0;   
@@ -43,121 +48,47 @@ void setup() {
   inS = new PVector(0, 0);
   outS = new PVector(0, -initLength);
 
-  /*
-    add variables to control the work flow
-   0: general fractal structure
-   1: random angle
-   2: random angle + random number of branches
+  branches = new ArrayList<Branch>();
+  branches.add(new Branch(inS, outS, 0, 0));
+
+  /* 
+   we can pre-calculate the tree here 
+   but draw it step by step 
    */
 
-  translate(width/2, height);
-
-
-  branches = new ArrayList<Branch>();
-  branches.add(new Branch(inS, outS, 0));
-
-  //for (int i = 0; i < steps+1; ++i){
-  //  for (Branch b : branches)
-  //    b.display();
-  //  branches = generate(branches, steps);
-
-  //}
+  branches = generateTree(branches);
 }
 
 void draw() {
   if (idx == 0) background(BACKGROUND);
   pushMatrix();
 
-  // translate(0, height);
   translate(width/2, height);
-  for (Branch b : branches){
+  for (Branch b : branches) {
     b.display();
   }
 
-  //translate((jdx + 1)*margin, 0);
-  //branches.add(new Branch(inS, outS, 0));
-  //for (Branch b : branches)
-  //  b.display();
-  //for (int i = 0; i < steps; ++i) {  
-  branches = generate(branches, steps);
-  //for (Branch b : branches)
-  //  b.display();
-  //}
   popMatrix();
 
-  //save all steps 
-  save("data/item" + idx + ".png");
-  if (idx > steps)
-    noLoop();
-  idx++;
+  // save all steps 
+  // save("data/item" + idx + ".png");
+  /* we display the tree only when it is finished */
+  //if (idx > steps) {
 
-  // branches.clear();
-  // jdx++;
-  // if ((jdx + 1)*margin > width) {
-  //  save("data/res.png");
   //  noLoop();
-  // }
-}
+  //  save("data/item" + idx + ".png");
+  //}
+  //idx++;
 
-ArrayList<Branch> generate(ArrayList<Branch> branches, int a) {
-
-  // strokeWeight(); 
-  ArrayList next = new ArrayList<Branch>();
-  for (Branch t : branches) {
-
-    for (int i = 0; i < (control == 2 ? (int)random(1, 4) : 1); ++i) {
-      // right branch
-      noiseSeed(1000*(int)random(5000));
-      float tmp = control < 1 ? angle : random(-PI/2, PI/2);
-      next.add(new Branch(t.end, t.pointNext(tmp), tmp));
-      // left branch
-      noiseSeed(1000*(int)random(5000));
-      tmp = control < 1 ? -angle : random(-PI/2, PI/2);
-      next.add(new Branch(t.end, t.pointNext(tmp), tmp));
-    }
-  }
-
-  return next;
-}
-
-
-class Branch {
-  PVector start; // start point
-  PVector end; // end point
-
-  float noisy; // necessary for wind  
-
-  // calulates the end point of the next branch\leaf
-  PVector pointNext(float angle) {
-    PVector a = end.get();
-    PVector v = PVector.sub(end, start);
-
-    v.div(scaleFactor); // scale vector by two 
-    v.rotate(angle); // rotate vector by given angle 
-    a.add(v); // "attach" vector to the end point
-
-    return a;
-  }
-
-  Branch(PVector s, PVector e, float noisyIn) {
-    start = s;
-    end = e;
-    noisy = noisyIn;
-  }
-
-  void display() {
-    strokeWeight(steps - idx + 2);
-    stroke(FILL);
-    fill(FILL);
-    line(start.x, start.y, end.x, end.y);
-  }
+  noLoop();
 }
 
 void keyPressed() {
   if (keyCode == 'r' || keyCode == 'R') {
     idx = 0; 
     branches.clear();
-    branches.add(new Branch(inS, outS, 0));
+    branches.add(new Branch(inS, outS, 0, 0));
+    branches = generateTree(branches);
     loop();
   }
 }
@@ -165,6 +96,7 @@ void keyPressed() {
 void mouseClicked() {
   idx = 0; 
   branches.clear();
-  branches.add(new Branch(inS, outS, 0));
+  branches.add(new Branch(inS, outS, 0, 0));
+  branches = generateTree(branches);
   loop();
 }
