@@ -41,7 +41,7 @@ boolean switchLayers = true;
 int control = 1;
 
 void setup() {
-  size(300, 300);
+  size(800, 300);
   background(FILL);
   angle = PI/2; 
   idx = 0;   
@@ -74,9 +74,9 @@ void setup() {
   hero = new Hero(width, height);
   hero.hero.beginDraw();
   hero.hero.background(0, 0, 0, 0); // this layer is transparent except objects 
-  hero.hero.noStroke();
-  hero.hero.fill(0); // @TODO: change 
-  hero.hero.ellipse(width/2, 4.0/5*height, 10, 10);
+  //hero.hero.noStroke();
+  hero.hero.fill(255); // @TODO: change 
+  hero.hero.ellipse(width/2, height/2, 60, 60);
   hero.hero.endDraw();
 
 
@@ -84,6 +84,7 @@ void setup() {
   bwLayer.beginDraw();
   bwLayer.background(BACKGROUND);
   bwLayer.fill(FILL);
+  bwLayer.noStroke();  // @DEBUG
   bwLayer.endDraw();
 
   wbLayer.beginDraw();
@@ -109,17 +110,39 @@ void draw() {
   ArrayList<Branch> tmpBranches = branches;
   try {
     for (Branch b : tmpBranches) {
-      curLayer = b.display(curLayer);
+      // curLayer = b.display(curLayer);
+      b.display(wbLayer);
+      b.display(bwLayer);
     }
+    // @ TODO: Here should be the part to reset the hero
   } 
   catch (Exception e) {
     // @TODO: Find a better way to fix this problem!
     e.printStackTrace();
   }
 
+  // @DEBUG @TODO: Delete this part 
+  PGraphics[] layers = new PGraphics[3];
+  layers[0] = hero.hero;
+  layers[1] = switchLayers ? wbLayer : bwLayer;
+  layers[2] = switchLayers ? bwLayer : wbLayer;
+
+
+  layers = switchPixelColors(layers);
+
   //  @TODO: We should put both pictures but one should be on top of another
-  image(curLayer, 0, 0);
-  image(hero.hero, 0, 0);
+
+
+  for (int i = layers.length - 1; i >= 0; --i)
+    image(layers[i], 0, 0);
+
+
+  //  image(layers[2], 0, 0);
+  //  image(layers[1], 0, 0);  
+  //  image(layers[0], 0, 0);
+
+  // image(curLayer, 0, 0);
+
 
   // image(activeLayer ?  bwLayer : wbLayer, 0, 0);
   // image(activeLayer ?  wbLayer : bwLayer, 0, 0);
@@ -137,9 +160,39 @@ void draw() {
 }
 
 // function to switch transparency of the pixels
-void switchPixelColors(){
+PGraphics[] switchPixelColors(PGraphics[] layers) {
+  /* [0] top level -- hero 
+   [1] first (top/visible) background
+   [2] second (lower) background */
+  /* this is the first iteration of this function 
+   @TODO: add offsets! that makes the code more efficient 
+   */
 
+  // use pixels from all layers 
+  for (int i = 0; i < layers.length; ++i)
+    layers[i].loadPixels();
+
+  for (int i = 0; i < layers[0].width; ++i) {
+    for (int j = 0; j < layers[0].height; ++j) {
+      if (alpha(layers[0].pixels[i + layers[0].width*j]) != 0) { //work only with objects
+        if ((layers[0].pixels[i + layers[0].width*j] - layers[1].pixels[i + layers[1].width*j]) < 10) {
+          println("HERE I WAS");
+          //layers[0].pixels[i + layers[0].width*j] = color(layers[0].pixels[i + layers[0].width*j], 0);
+          layers[0].pixels[i + layers[0].width*j] = color(layers[2].pixels[i + layers[2].width*j]);
+        } else {
+          //layers[0].pixels[i + layers[0].width*j] = color(layers[0].pixels[i + layers[0].width*j], 0);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < layers.length; ++i)
+    layers[i].updatePixels();
+
+  return layers;
 }
+
+
 
 
 
@@ -183,6 +236,13 @@ void clearBackground() {
   wbLayer.fill(BACKGROUND);
   wbLayer.stroke(BACKGROUND);
   wbLayer.endDraw();
+
+  hero.hero.beginDraw();
+  hero.hero.background(0, 0, 0, 0); // this layer is transparent except objects 
+  hero.hero.noStroke();
+  hero.hero.fill(255); // @TODO: change 
+  hero.hero.ellipse(width/2, height/2, 60, 60);
+  hero.hero.endDraw();
 
   redraw();
 }
