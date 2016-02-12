@@ -16,13 +16,16 @@ PVector outS;
 color BACKGROUND; 
 color FILL; 
 
+Hero hero;
 
 boolean flagKeyPressed = false;
+boolean activeLayer = true;
 
 /*
   @IDEA: there are two layers with inverted colors 
  */
 PGraphics bwLayer, wbLayer, curLayer;
+
 /* 
  false -- bwLayer
  true -- wbLayer
@@ -66,6 +69,18 @@ void setup() {
   wbLayer = createGraphics(width, height);
   curLayer = createGraphics(width, height);
 
+
+  /* create hero */
+  hero = new Hero(width, height);
+  hero.hero.beginDraw();
+  hero.hero.background(0, 0, 0, 0); // this layer is transparent except objects 
+  hero.hero.noStroke();
+  hero.hero.fill(0); // @TODO: change 
+  hero.hero.ellipse(width/2, 4.0/5*height, 10, 10);
+  hero.hero.endDraw();
+
+
+
   bwLayer.beginDraw();
   bwLayer.background(BACKGROUND);
   bwLayer.fill(FILL);
@@ -84,7 +99,9 @@ void setup() {
    */
 
   branches = generateTree(branches);
-  
+
+
+
   noLoop();
 }
 
@@ -99,8 +116,14 @@ void draw() {
     // @TODO: Find a better way to fix this problem!
     e.printStackTrace();
   }
-  
+
+  //  @TODO: We should put both pictures but one should be on top of another
   image(curLayer, 0, 0);
+  image(hero.hero, 0, 0);
+
+  // image(activeLayer ?  bwLayer : wbLayer, 0, 0);
+  // image(activeLayer ?  wbLayer : bwLayer, 0, 0);
+
 
   // save all steps 
   // save("data/item" + idx + ".png");
@@ -111,9 +134,13 @@ void draw() {
   //  save("data/item" + idx + ".png");
   //}
   //idx++;
+}
 
+// function to switch transparency of the pixels
+void switchPixelColors(){
 
 }
+
 
 
 void keyPressed() {

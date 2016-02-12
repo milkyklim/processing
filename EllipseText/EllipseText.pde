@@ -15,27 +15,27 @@ int xOffset = 100;
 int yOffset = 100;
 boolean switchColor = true;
 
-color[] colors = {color(255, 0  , 128),
+/*color[] colors = {color(255, 0  , 128),
                    color(128, 255, 128),
                    color(255, 255, 0),
                    color(0  , 255, 128)};
-
+*/
 void setup() {
   size(500, 300);
-  background(255);
+  background(switchColor ? 255 : 0);
   drawText();
   r = dist(xEllipse, yEllipse, width, height) + 5;
-  frameRate(200);
+  frameRate(100);
   smooth();
 }
 
 void draw() {
   if (frameCount != 1)
-    // background(switchColor ? 0 : 255);
-    background(switchColor ? colors[0] : colors[2]);
+    background(switchColor ? 0 : 255);
+    // background(switchColor ? colors[0] : colors[2]);
   /* Covered text */
   noStroke();
-  fill(switchColor ? colors[3] : colors[1]); 
+  fill(switchColor ? 255 : 0); 
   ellipseMode(RADIUS);
   ellipse(xEllipse, yEllipse, r, r);
   drawText();
@@ -43,7 +43,7 @@ void draw() {
     r -= step;
   else {
     switchColor = !switchColor;  //<>//
-    println(switchColor ? colors[3] : colors[1]);
+    // println(switchColor ? colors[3] : colors[1]);
     r = dist(xEllipse, yEllipse, width, height) + 5; 
     
     // here should be color randomness
@@ -57,7 +57,7 @@ void drawText() {
   white.beginDraw();
   white.noStroke();
   white.background(0, 0);
-  white.fill(switchColor ? colors[1] : colors[3]);
+  white.fill(switchColor ? 255 : 0);
   white.textAlign(CENTER, CENTER);
   white.textSize(TEXTSIZE);
   white.text(msg, white.width/2, white.height/2);
@@ -66,7 +66,7 @@ void drawText() {
   black.beginDraw();
   black.noStroke();
   black.background(0, 0);
-  black.fill(switchColor ? colors[3] : colors[1]);
+  black.fill(switchColor ? 0 : 255);
   black.textAlign(CENTER, CENTER);
   black.textSize(TEXTSIZE);
   black.text(msg, black.width/2, black.height/2);
@@ -81,7 +81,7 @@ void drawText() {
             /* do nothing */
         } else {
             /* invert color */
-          black.pixels[i + black.width*j] = colors[1];
+          black.pixels[i + black.width*j] = color(black.pixels[i + black.width*j], 0);
         }
       }
     }

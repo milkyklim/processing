@@ -3,7 +3,7 @@
   setters + getters
 */ 
 
-class Branch {
+class Branch{
   private PVector start; // start point
   private PVector end; // end point
   private float noisy; // necessary for wind  
