@@ -41,7 +41,7 @@ boolean switchLayers = true;
 int control = 1;
 
 void setup() {
-  size(800, 300);
+  size(800, 300, P2D);
   background(FILL);
   angle = PI/2; 
   idx = 0;   
@@ -75,8 +75,9 @@ void setup() {
   hero.hero.beginDraw();
   hero.hero.background(0, 0, 0, 0); // this layer is transparent except objects 
   //hero.hero.noStroke();
-  hero.hero.fill(255); // @TODO: change 
-  hero.hero.ellipse(width/2, height/2, 60, 60);
+  hero.hero.fill(0); // @TODO: change 
+  // hero.hero.ellipse(width/2, height/2, 60, 60);
+  hero.hero.rect(width/2, height/2, 60, 60);
   hero.hero.endDraw();
 
 
@@ -157,6 +158,8 @@ void draw() {
   //  save("data/item" + idx + ".png");
   //}
   //idx++;
+  
+  save("data/output.png");
 }
 
 // function to switch transparency of the pixels
@@ -175,12 +178,12 @@ PGraphics[] switchPixelColors(PGraphics[] layers) {
   for (int i = 0; i < layers[0].width; ++i) {
     for (int j = 0; j < layers[0].height; ++j) {
       if (alpha(layers[0].pixels[i + layers[0].width*j]) != 0) { //work only with objects
-        if ((layers[0].pixels[i + layers[0].width*j] - layers[1].pixels[i + layers[1].width*j]) < 10) {
-          println("HERE I WAS");
-          //layers[0].pixels[i + layers[0].width*j] = color(layers[0].pixels[i + layers[0].width*j], 0);
-          layers[0].pixels[i + layers[0].width*j] = color(layers[2].pixels[i + layers[2].width*j]);
+        if ((layers[0].pixels[i + layers[0].width*j] == layers[2].pixels[i + layers[2].width*j])) {
+          // println("HERE I WAS");
+          // layers[0].pixels[i + layers[0].width*j] = color(layers[0].pixels[i + layers[0].width*j], 0);
         } else {
-          //layers[0].pixels[i + layers[0].width*j] = color(layers[0].pixels[i + layers[0].width*j], 0);
+          layers[0].pixels[i + layers[0].width*j] = color(layers[0].pixels[i + layers[0].width*j], 0);
+          layers[1].pixels[i + layers[1].width*j] = color(layers[1].pixels[i + layers[1].width*j], 0);
         }
       }
     }
@@ -219,6 +222,10 @@ void keyPressed() {
 
 void mouseClicked() {
   clearBackground();
+
+  switchLayers = !switchLayers;
+  curLayer = (switchLayers ? wbLayer : bwLayer);
+
   generateNewFullTree();
 }
 
@@ -239,9 +246,10 @@ void clearBackground() {
 
   hero.hero.beginDraw();
   hero.hero.background(0, 0, 0, 0); // this layer is transparent except objects 
-  hero.hero.noStroke();
-  hero.hero.fill(255); // @TODO: change 
-  hero.hero.ellipse(width/2, height/2, 60, 60);
+  // hero.hero.noStroke();
+  hero.hero.fill(0); // @TODO: change 
+  // hero.hero.ellipse(width/2, height/2, 60, 60);
+  hero.hero.rect(width/2, height/2, 60, 60);
   hero.hero.endDraw();
 
   redraw();
