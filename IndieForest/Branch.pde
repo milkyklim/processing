@@ -1,9 +1,9 @@
 /*
   @DONE: rewrite as a proper class 
-  setters + getters
-*/ 
+ setters + getters
+ */
 
-class Branch{
+class Branch {
   private PVector start; // start point
   private PVector end; // end point
   private float noisy; // necessary for wind  
@@ -14,37 +14,48 @@ class Branch{
     this.end = e;
     this.noisy = noisyIn;
     this.generation = generation;
-  }
-  
-  void setStart(PVector s){
-    this.start = s; 
-  }
-  
-  void setEnd(PVector e){
-    this.end = e; 
+    
+    // @DEBUG 
+    // println(this.start + " " + this.end); 
   }
 
-  void setNoisy(float noisyIn){
-    this.noisy = noisyIn; 
+  void setStart(PVector s) {
+    this.start = s;
   }
-  
-  void setGeneration(int g){
+
+  void setEnd(PVector e) {
+    this.end = e;
+  }
+
+  void setNoisy(float noisyIn) {
+    this.noisy = noisyIn;
+  }
+
+  void setGeneration(int g) {
     this.generation = g;
   }
-  
-  PVector getStart(){
-    return this.start; 
+
+  PVector getStart() {
+    return this.start;
   }
-  
-  PVector getEnd(){
-    return this.end; 
+
+  float getStartX() {
+    return this.start.x;
   }
-  
-  float getNoisy(){
+
+  PVector getEnd() {
+    return this.end;
+  }
+
+  float getEndX() {
+    return this.end.x;
+  }
+
+  float getNoisy() {
     return this.noisy;
   }
-  
-  int getGeneration(){
+
+  int getGeneration() {
     return this.generation;
   }
 
@@ -59,36 +70,38 @@ class Branch{
     a.add(v); // "attach" vector to the end point
     return a;
   }
-  
+
   // displays the fractal
-  PGraphics display(PGraphics inPg) {
+  PGraphics display(PGraphics inPg, int xShift, int yShift) {
     // PGraphics pg = createGraghics(inPg.width, inPg.height);
-    
+
     inPg.beginDraw();
-    inPg.translate(width/2, height);
+    inPg.pushMatrix();
+    inPg.translate(width/2 + xShift, height + yShift);
+    // inPg.stroke(random(255), random(255), random(255)); // @DEBUG
     inPg.strokeWeight(steps - generation + 1);
-//    inPg.stroke(BACKGROUND); // error!!!
-//    inPg.fill(FILL);
+    //    inPg.stroke(BACKGROUND); // error!!!
+    //    inPg.fill(FILL);
     inPg.line(start.x, start.y, end.x, end.y);
+    inPg.popMatrix();
     inPg.endDraw();
-    
+
     return inPg;
-    
   }
 }
 
 
+//******************************************************//
+
 /* generates the next generation of branches */
-ArrayList<Branch> generate(ArrayList<Branch> branches, int generation) {
-  ArrayList next = new ArrayList<Branch>();
-  for (Branch t : branches) {
+ArrayList<Branch> generate(ArrayList<Branch> localBranches, int generation) {
+   ArrayList next = new ArrayList<Branch>();
+  for (Branch t : localBranches) {
     for (int i = 0; i < (control == 2 ? (int)random(1, 4) : 1); ++i) {
       // right branch
-      noiseSeed(1000*(int)random(5000));
       float tmp = control < 1 ? angle : random(-PI/2, PI/2);
       next.add(new Branch(t.end, t.pointNext(tmp), tmp, generation));
       // left branch
-      noiseSeed(1000*(int)random(5000));
       tmp = control < 1 ? -angle : random(-PI/2, PI/2);
       next.add(new Branch(t.end, t.pointNext(tmp), tmp, generation));
     }
@@ -98,14 +111,14 @@ ArrayList<Branch> generate(ArrayList<Branch> branches, int generation) {
 }
 
 /* generates the full tree in one run */
-ArrayList<Branch> generateTree(ArrayList<Branch> b){
+ArrayList<Branch> generateTree(ArrayList<Branch> b) {
   ArrayList<Branch> branchFull = new ArrayList<Branch>();
   ArrayList<Branch> branchTmp = new ArrayList<Branch>(); // temporary variable the loop 
   branchTmp = b;
   branchFull = b;
   for (int i = 0; i < steps; ++i) { // over all branches
     branchTmp = generate(branchTmp, i + 1);
-    branchFull.addAll(branchTmp); 
+    branchFull.addAll(branchTmp);
   }
   return branchFull;
 }
