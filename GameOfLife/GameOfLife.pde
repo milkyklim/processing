@@ -4,6 +4,8 @@ PImage img;
 int xSize = 4; 
 int ySize = 4;
 
+int cStroke = 4;
+
 final int WIDTH = 640;
 final int HEIGHT = 426;
 
@@ -38,27 +40,50 @@ void setup() {
 }
 
 void draw() {
-  //background(255);
+  background(255);
 
   // initialize
-  for (int i = 0; i < pBoard.length; ++i) {
-    pBoard[i] = cBoard[i]; 
-    // cBoard[i] = random(0, 2) < 1 ? true : false;
-  }
+  //for (int i = 0; i < pBoard.length; ++i) {
+  //  pBoard[i] = cBoard[i]; 
+  //  // cBoard[i] = random(0, 2) < 1 ? true : false;
+  //}
 
-  cBoard = boardUpdate(pBoard, cBoard);
+  if (frameCount%xSize == 0) { // update every xSize-frame
+    for (int i = 0; i < pBoard.length; ++i) {
+      pBoard[i] = cBoard[i]; 
+      // cBoard[i] = random(0, 2) < 1 ? true : false;
+    }
+    cBoard = boardUpdate(pBoard, cBoard);
+    cStroke = xSize; //<>//
+    println(frameCount);
+  }
   // image(img, 0, 0);
-  boardDraw(cBoard, img);
+  boardDraw(cBoard, pBoard, img, cStroke);
+  cStroke--;
+  // xSize--;
 }
 
-void boardDraw(boolean[] cB, PImage img) {
+void boardDraw(boolean[] cB, boolean[] pB, PImage img, int cS) {
   // plot points
   img.loadPixels();
   for (int j = 0; j < yNum; ++j) {
     for (int i = 0; i < xNum; ++i) {
-      if (cB[i + xNum*j]) {
-        fill(img.pixels[xSize*i + img.width*ySize*j]);
+      if (cB[i + xNum*j] && pB[i + xNum*j]) {
+        //strokeWeight(xSize);
+        fill(img.pixels[xSize*i + img.width*ySize*j]); //<>//
         ellipse(xSize*i, ySize*j, xSize, ySize);
+      }
+      if (cB[i + xNum*j] && !pB[i + xNum*j]) {
+        // strokeWeight(xSize);
+        fill(img.pixels[xSize*i + img.width*ySize*j]); //<>//
+        ellipse(xSize*i, ySize*j, xSize - cS, ySize - cS);
+        // println(xSize - cS);
+      }
+      if (!cB[i + xNum*j] && pB[i + xNum*j]) {
+        //strokeWeight(cS);
+        fill(img.pixels[xSize*i + img.width*ySize*j]);
+        ellipse(xSize*i, ySize*j, cS, cS);
+        // println(cS);
       }
     }
   }
