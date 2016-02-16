@@ -1,10 +1,8 @@
-boolean[] pBoard, cBoard;  
+boolean[] pBoard, cBoard; // previous, current board
 PImage img; 
 
-int xSize = 4; 
-int ySize = 4;
-
-int cStroke = 4;
+int Size; // radius of the cell
+int cStroke; // initial size of the stroke/ellipse 
 
 final int WIDTH = 640;
 final int HEIGHT = 426;
@@ -13,15 +11,15 @@ int xNum; // total number of points in x direction
 int yNum; // total number of points in y direction
 
 void setup() {
-  img = loadImage("data/input.jpg");
+  img = loadImage("data/input.jpg"); // load pic for color 
   size(640, 426); // have to take these from the image 
   background(255); 
 
-  xNum = WIDTH/xSize; 
-  yNum = HEIGHT/ySize; 
+  Size = 5; // radius of the cell
+  cStroke = Size; // initial size of the stroke/ellipse 
 
-  // check if all points are there
-  // println(xNum * xSize * yNum * ySize + " " +  WIDTH * HEIGHT);
+  xNum = WIDTH/Size; // count number of cells in x-direction 
+  yNum = HEIGHT/Size;  // count number of cells in y-direction 
 
   pBoard = new boolean[xNum*yNum];
   cBoard = new boolean[xNum*yNum];
@@ -33,67 +31,79 @@ void setup() {
   }
 
   noStroke();
-
-  // println(img.pixels.length);
-
-  frameRate(24);
+  //frameRate(24); // to keep it slow
 }
 
 void draw() {
   background(255);
 
-  // initialize
-  //for (int i = 0; i < pBoard.length; ++i) {
-  //  pBoard[i] = cBoard[i]; 
-  //  // cBoard[i] = random(0, 2) < 1 ? true : false;
-  //}
+  // restart game  
+  if (lifeSum(cBoard) < 4000) mouseClicked();
 
-  if (frameCount%xSize == 0) { // update every xSize-frame
+  if (frameCount%Size == 0) { // update every Size-frame step
+    // copy current to previous board 
     for (int i = 0; i < pBoard.length; ++i) {
-      pBoard[i] = cBoard[i]; 
-      // cBoard[i] = random(0, 2) < 1 ? true : false;
+      pBoard[i] = cBoard[i];
     }
     cBoard = boardUpdate(pBoard, cBoard);
-    cStroke = xSize; //<>//
-    println(frameCount);
+    cStroke = Size;
   }
   // image(img, 0, 0);
   boardDraw(cBoard, pBoard, img, cStroke);
   cStroke--;
-  // xSize--;
 }
 
+/*
+ count number of alive cells  //<>//
+ cB -- array, current board
+ */
+int lifeSum(boolean[] cB) {
+  int res = 0;
+  for (int i = 0; i < cB.length; ++i) {
+    if (cB[i]) res++;
+  }
+  return res;
+}
+
+/* 
+ draw current board
+ cB -- array, current board 
+ pB -- array, previous board
+ img -- initial pic
+ cS -- size of the stroke\ellipse //<>//
+ */
 void boardDraw(boolean[] cB, boolean[] pB, PImage img, int cS) {
   // plot points
   img.loadPixels();
-  for (int j = 0; j < yNum; ++j) {
+  for (int j = 0; j < yNum; ++j) { //<>//
     for (int i = 0; i < xNum; ++i) {
       if (cB[i + xNum*j] && pB[i + xNum*j]) {
-        //strokeWeight(xSize);
-        fill(img.pixels[xSize*i + img.width*ySize*j]); //<>//
-        ellipse(xSize*i, ySize*j, xSize, ySize);
+        //strokeWeight(Size);
+        fill(img.pixels[Size*i + img.width*Size*j]);
+        ellipse(Size*i, Size*j, Size, Size);
       }
       if (cB[i + xNum*j] && !pB[i + xNum*j]) {
-        // strokeWeight(xSize);
-        fill(img.pixels[xSize*i + img.width*ySize*j]); //<>//
-        ellipse(xSize*i, ySize*j, xSize - cS, ySize - cS);
-        // println(xSize - cS);
+        // strokeWeight(Size);
+        fill(img.pixels[Size*i + img.width*Size*j]);
+        ellipse(Size*i, Size*j, Size - cS, Size - cS);
       }
       if (!cB[i + xNum*j] && pB[i + xNum*j]) {
         //strokeWeight(cS);
-        fill(img.pixels[xSize*i + img.width*ySize*j]);
-        ellipse(xSize*i, ySize*j, cS, cS);
-        // println(cS);
+        fill(img.pixels[Size*i + img.width*Size*j]);
+        ellipse(Size*i, Size*j, cS, cS);
       }
     }
   }
 }
 
-
+/*
+  update board applying game of life rules  
+ */
 boolean[] boardUpdate(boolean[] pB, boolean[] cB) {
-  for (int i =0; i < xNum; ++i) {
+  for (int i = 0; i < xNum; ++i) {
     for (int j = 0; j < yNum; ++j) {
       int res = 0; // neigbors counter
+
       if (pB[(i + 1 + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
       if (pB[(i + 1 + xNum)%xNum + xNum*((j     + yNum)%yNum)]) res++;
       if (pB[(i + 1 + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
@@ -116,6 +126,9 @@ boolean[] boardUpdate(boolean[] pB, boolean[] cB) {
   return cB;
 }
 
+/*
+  restart picture
+ */
 void mouseClicked() {
   background(255);
   for (int i = 0; i < cBoard.length; ++i) {
