@@ -1,17 +1,24 @@
-/* //<>// //<>// //<>//
-  creates Tree Fractal
+/* //<>//
+ creates Tree Fractal
  */
+
+// @TODO: Delete unused variables 
 
 ArrayList<ArrayList<Branch>> branches;
 float angle; // define the rotation of the branch
-int idx;  // used fod counting number of frames
+
+int idx;  // used for counting number of frames
 int jdx;  // used for counting number of trees
+
 int offset; 
 int steps; // number of frames to save\generate
 float scaleFactor; // scale factor for the length of the branches 
 float initLength;  // initial length of the root
 PVector inS;
 PVector outS;
+
+int xShift;
+int yShift;
 
 color BACKGROUND; 
 color FILL; 
@@ -43,28 +50,33 @@ boolean switchLayers = true;
 int control = 1;
 
 void setup() {
+
   size(800, 300, P2D);
-  background(FILL);
+  background(BACKGROUND);
   angle = PI/2; 
   idx = 0;   
   steps = 5; 
   scaleFactor = 1.5; 
   initLength = 75; 
   jdx = 0;
-  offset = 40;
+  offset = 30;
 
   //---------------
   //strokeJoin(ROUND);
   //strokeCap(SQUARE);
   //---------------
 
+
   BACKGROUND = color(0);
   FILL = color(255);
-  TREEN = 20;
+  TREEN = 5; // to prevent errors
+
+  // allocation
 
   bwLayer = createGraphics(width, height);
   wbLayer = createGraphics(width, height);
   curLayer = createGraphics(width, height);
+  // ----------
 
   /* create hero */
   hero = new Hero(width, height);
@@ -72,16 +84,14 @@ void setup() {
   hero.hero.background(0, 0); // this layer is transparent except objects 
   hero.hero.noStroke();
   hero.hero.fill(0); // @TODO: change 
-  // hero.hero.ellipse(width/2, height/2, 60, 60);
   hero.hero.rect(0, height/2, width, 90);
   hero.hero.endDraw();
-
+  /* first layer */
   bwLayer.beginDraw();
   bwLayer.background(BACKGROUND);
   bwLayer.fill(FILL);
-  // bwLayer.noStroke();  // @DEBUG
   bwLayer.endDraw();
-
+  /* second layer */
   wbLayer.beginDraw();
   wbLayer.background(FILL);
   wbLayer.fill(BACKGROUND);
@@ -91,13 +101,17 @@ void setup() {
   outS = new PVector(0, -initLength);
 
   // create forest 
-  branches = new ArrayList<ArrayList<Branch>>(); 
-  ArrayList<Branch> tmpBranches = new ArrayList<Branch>();
+  branches = new ArrayList<ArrayList<Branch>>(); // allocate forest
+  ArrayList<Branch> tmpBranches = new ArrayList<Branch>(); // define temporary tree
+
+  // count number of trees 
+  TREEN = width/offset;
+
   for (int i = 0; i < TREEN; ++i) {
     branches.add(i, new ArrayList<Branch>()); // root of the new tree
-    tmpBranches.clear(); // stores current tree
-    tmpBranches.add(new Branch(inS, outS, 0, 0)); // place
-    branches.get(i).addAll(generateTree(tmpBranches));
+    tmpBranches.clear(); // clear tmp for current tree
+    tmpBranches.add(new Branch(inS, outS, 0, 0)); // add the root
+    branches.get(i).addAll(generateTree(tmpBranches)); // add all branches of the current tree
   }
 
   noLoop();
@@ -105,51 +119,37 @@ void setup() {
 
 void draw() {
 
-  int xShift = -width/2 + 30;
-  int yShift = 30;
-  
+  xShift = -width/2 + offset;
+  yShift = 30;
+
   for (ArrayList<Branch> tree : branches) {
     ArrayList<Branch> tmpBranches = tree;
-    //println("size: " + tmpBranches.size()); // looks like we get the full tree here SOOQA! 
-    //println(tmpBranches.get(0).getStartX() + " " + tmpBranches.get(0).getEndX());
     try {
-      // if (branches.indexOf(tree) == 2) {
       for (Branch b : tmpBranches) {
-        // curLayer = b.display(curLayer);
         // display tree branch-by-branch
 
         b.display(wbLayer, xShift, 0);
         b.display(bwLayer, xShift, 0);
       }
       // @ TODO: Here should be the part to reset the hero
-      //  }
-      
     }
     catch (Exception e) {
       // @TODO: Find a better way to fix this problem!
       e.printStackTrace();
     }
-    xShift += offset;
+    xShift += offset; // shift the next tree
   }
 
-  // @DEBUG @TODO: Delete this part 
   PGraphics[] layers = new PGraphics[3];
   layers[0] = hero.hero;
   layers[1] = switchLayers ? wbLayer : bwLayer;
   layers[2] = switchLayers ? bwLayer : wbLayer;
 
+  // define the colors of the pictures 
   layers = switchPixelColors(layers);
 
-  //  @TODO: We should put both pictures but one should be on top of another
   for (int i = layers.length - 1; i >= 0; --i)
     image(layers[i], 0, 0);
-
-  // image(curLayer, 0, 0);
-
-
-  // image(activeLayer ?  bwLayer : wbLayer, 0, 0);
-  // image(activeLayer ?  wbLayer : bwLayer, 0, 0);
-
 
   // save all steps 
   // save("data/item" + idx + ".png");
@@ -161,7 +161,7 @@ void draw() {
   //}
   //idx++;
 
-  save("data/output.png");
+  // save("data/output.png");
 }
 
 // function to switch transparency of the pixels
@@ -255,28 +255,16 @@ void clearBackground() {
   redraw();
 }
 
+// generates full tree 
 void generateNewFullTree() {
-  idx = 0; 
-  branches.clear();
-  //branches.add(new Branch(inS, outS, 0, 0));
-  //branches = generateTree(branches);
-
-  // create forest 
-  // branches = new ArrayList<ArrayList<Branch>>(); 
-  // create each tree in the forest 
-  for (int i = 0; i < TREEN; ++i) {
-    branches.add(new ArrayList<Branch>());
+  // inS.x = 0;
+  // outS.x = 0;
+  // idx = 0; 
+  branches.clear(); // remove all trees 
+  for (int i = 0; i < TREEN; ++i) { 
+    branches.add(new ArrayList<Branch>()); // create each tree in the forest
+    branches.get(i).add(new Branch(inS, outS, 0, 0)); // add root
   }
-
-  inS.x = 0;
-  outS.x = 0;
-
-  for (int i = 0; i < TREEN; ++i) {
-    branches.get(i).add(new Branch(inS, outS, 0, 0));
-    // println(i + " " + inS.x);
-    // inS.x += offset;
-    // outS.x += offset;
-  }  
 
   for (ArrayList<Branch> tree : branches) {
     tree = generateTree(tree);
