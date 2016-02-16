@@ -19,7 +19,7 @@ void setup() {
   yNum = HEIGHT/ySize; 
 
   // check if all points are there
-  println(xNum * xSize * yNum * ySize + " " +  WIDTH * HEIGHT);
+  // println(xNum * xSize * yNum * ySize + " " +  WIDTH * HEIGHT);
 
   pBoard = new boolean[xNum*yNum];
   cBoard = new boolean[xNum*yNum];
@@ -30,18 +30,15 @@ void setup() {
     cBoard[i] = random(0, 2) < 1 ? true : false;
   }
 
-  img.loadPixels();
   noStroke();
 
-  println(img.pixels.length);
+  // println(img.pixels.length);
 
   frameRate(24);
 }
 
 void draw() {
-  background(255);
-  // strokeWeight(1);
-
+  //background(255);
 
   // initialize
   for (int i = 0; i < pBoard.length; ++i) {
@@ -49,35 +46,17 @@ void draw() {
     // cBoard[i] = random(0, 2) < 1 ? true : false;
   }
 
-  for (int i =0; i < xNum; ++i) {
-    for (int j = 0; j < yNum; ++j) {
-      int res = 0; // neigbors counter
-      if (pBoard[(i + 1 + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
-      if (pBoard[(i + 1 + xNum)%xNum + xNum*((j     + yNum)%yNum)]) res++;
-      if (pBoard[(i + 1 + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
-      if (pBoard[(i     + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
-      if (pBoard[(i     + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
-      if (pBoard[(i - 1 + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
-      if (pBoard[(i - 1 + xNum)%xNum + xNum*((j     + yNum)%yNum)]) res++;
-      if (pBoard[(i - 1 + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
-
-      // current cell is alive
-      if ((res == 3 || res == 2) && pBoard[i + xNum*j]) 
-        cBoard[i + xNum*j] = true;
-      else // new live 
-      if ((res == 3) && !pBoard[i + xNum*j]) 
-        cBoard[i + xNum*j] = true;
-      else cBoard[i + xNum*j] = false;
-    }
-  }
-
-
+  cBoard = boardUpdate(pBoard, cBoard);
   // image(img, 0, 0);
+  boardDraw(cBoard, img);
+}
 
-  // plot initial points
+void boardDraw(boolean[] cB, PImage img) {
+  // plot points
+  img.loadPixels();
   for (int j = 0; j < yNum; ++j) {
     for (int i = 0; i < xNum; ++i) {
-      if (cBoard[i + xNum*j]) {
+      if (cB[i + xNum*j]) {
         fill(img.pixels[xSize*i + img.width*ySize*j]);
         ellipse(xSize*i, ySize*j, xSize, ySize);
       }
@@ -85,7 +64,35 @@ void draw() {
   }
 }
 
+
+boolean[] boardUpdate(boolean[] pB, boolean[] cB) {
+  for (int i =0; i < xNum; ++i) {
+    for (int j = 0; j < yNum; ++j) {
+      int res = 0; // neigbors counter
+      if (pB[(i + 1 + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
+      if (pB[(i + 1 + xNum)%xNum + xNum*((j     + yNum)%yNum)]) res++;
+      if (pB[(i + 1 + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
+      if (pB[(i     + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
+      if (pB[(i     + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
+      if (pB[(i - 1 + xNum)%xNum + xNum*((j + 1 + yNum)%yNum)]) res++;
+      if (pB[(i - 1 + xNum)%xNum + xNum*((j     + yNum)%yNum)]) res++;
+      if (pB[(i - 1 + xNum)%xNum + xNum*((j - 1 + yNum)%yNum)]) res++;
+
+      // current cell is alive
+      if ((res == 3 || res == 2) && pB[i + xNum*j]) 
+        cB[i + xNum*j] = true;
+      else // new live 
+      if ((res == 3) && !pB[i + xNum*j]) 
+        cB[i + xNum*j] = true;
+      else cB[i + xNum*j] = false;
+    }
+  }
+
+  return cB;
+}
+
 void mouseClicked() {
+  background(255);
   for (int i = 0; i < cBoard.length; ++i) {
     cBoard[i] = random(0, 2) < 1 ? true : false;
   }
