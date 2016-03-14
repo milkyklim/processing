@@ -7,8 +7,13 @@ int cStroke; // initial size of the stroke/ellipse
 final int WIDTH = 640;
 final int HEIGHT = 426;
 
+//final int WIDTH = 530;
+//final int HEIGHT = 530;
+
 int xNum; // total number of points in x direction
 int yNum; // total number of points in y direction
+
+int totalFrames; 
 
 void setup() {
   img = loadImage("data/input.jpg"); // load pic for color 
@@ -18,7 +23,9 @@ void setup() {
   Size = 5; // radius of the cell
   cStroke = Size; // initial size of the stroke/ellipse 
 
-    xNum = WIDTH/Size; // count number of cells in x-direction 
+  totalFrames = 15;
+
+  xNum = WIDTH/Size; // count number of cells in x-direction 
   yNum = HEIGHT/Size;  // count number of cells in y-direction 
 
   pBoard = new boolean[xNum*yNum];
@@ -51,8 +58,21 @@ void draw() {
   // image(img, 0, 0);
   boardDraw(cBoard, pBoard, img, cStroke);
   cStroke--;
+
+
+  // kill everything 
+  if (frameCount >= totalFrames){
+    pushStyle();
+    noStroke();  
+    fill(255, frameCount < totalFrames + Size ? frameCount%Size*(256/(Size - 1)) - 1 : 255);  
+    rect(0, 0, width, height);
+    popStyle();
+  }
   // save frames
-  // save("data/output/item-" + frameCount + ".png");
+  if (frameCount < totalFrames + Size)
+    save("data/output/item-" + frameCount + ".png");
+  else
+    exit();
 }
 
 /*
@@ -128,6 +148,7 @@ boolean[] boardUpdate(boolean[] pB, boolean[] cB) {
 
   return cB;
 }
+
 
 /*
   restart picture
