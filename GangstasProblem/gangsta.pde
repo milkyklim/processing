@@ -74,19 +74,21 @@ void gangstaDeadShow(PVector[] xy_, int[] gA, PGraphics p, int[] dead) {
   // cheap vestion with bit manipulations 
 
   for (int i = 0; i < xy_.length; ++i) {
-    if (gA[i] < 32)
+    if (gA[i] <= 30)
       dead[0] = dead[0] | (1 << gA[i]);
     else
-      dead[1] = dead[1] | (1 << (gA[i] - 32));
+      dead[1] = dead[1] | (1 << (gA[i] - 31));
   }
+  
   for (int i = 0; i < xy_.length; ++i) {
-    if (i < 32) {
+    if (i <= 30) {
       if (((dead[0] & (1 << i)) >> i) == 1)
         image(p, xy_[i].x - gRadius/2, xy_[i].y - gRadius/2);
     } else
-      if (((dead[1] & (1 << (i - 32))) >> (i - 32)) == 1)
-      image(p, xy_[i].x - gRadius/2, xy_[i].y - gRadius/2);
+      if (((dead[1] & (1 << (i - 31))) >> (i - 31)) == 1)
+        image(p, xy_[i].x - gRadius/2, xy_[i].y - gRadius/2);
   }
+
 
   // fast expensive version 
   //boolean [] dead = new boolean [xy_.length];
@@ -111,4 +113,3 @@ void gangstaShotShow(PVector[] xy_, int[] gA, PVector[] shot, int sT) {
   }
   popStyle();
 }
-
